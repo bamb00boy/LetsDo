@@ -9,41 +9,44 @@ import SwiftUI
 
 struct ListView: View {
     
-    @State var items: [ItemModel] = [
-        ItemModel(title: "Buy milk", isCompleted: false),
-        ItemModel(title: "Learn SwiftUI", isCompleted: true),
-        ItemModel(title: "Go for a walk", isCompleted: false)
-    ]
+    @EnvironmentObject var listViewModel: ListViewModel
     
     var body: some View {
-        List {
-            ForEach(items) { item in
-                ListRowView(item: item)
+        
+        ZStack {
+            if listViewModel.items.isEmpty {
+                NoItemsView()
+                    .transition(AnyTransition.opacity.animation(.easeIn))
+            } else {
+                List {
+                    ForEach(listViewModel.items) { item in
+                        ListRowView(item: item)
+                            .onTapGesture {
+                                withAnimation(.linear) {
+                                    listViewModel.updateItem(item: item)
+                                }
+                            }
+                    }
+                    .onDelete(perform: listViewModel.deleteItem)
+                    .onMove(perform: listViewModel.moveItem)
+                }
+                .listStyle(PlainListStyle())
             }
-            .onDelete(perform: deleteItem)
-            .onMove(perform: moveItem)
         }
-        .listStyle(PlainListStyle()) 
-        .navigationTitle(Text("Let's Do List 📋"))
+        .navigationTitle(Text("Let's Do... 📋"))
         .navigationBarItems(
             leading: EditButton(),
             trailing:
                 NavigationLink("Add", destination: AddView())
         )
     }
-    
-    func deleteItem(indexSet: IndexSet) {
-        items.remove(atOffsets: indexSet)
-    }
-    
-    func moveItem(from: IndexSet, to: Int) {
-        items.move(fromOffsets: from, toOffset: to)
-    }
 }
 
-#Preview {
-    NavigationView {
-        ListView()
+struct ListView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            ListView()
+        }
+        .environmentObject(ListViewModel())
     }
 }
-
